@@ -1,35 +1,7 @@
-# AnyTop: Character Animation Diffusion with Any Topology
+# Chain-Motion-Based Embedding for Anytopology Character Motion Generation
 
-The official PyTorch implementation of the paper [**"AnyTop: Character Animation Diffusion with Any Topology"**]().
 
-Please visit our [**webpage**](https://anytop2025.github.io/Anytop-page/) for more details.
 
-![teaser](https://github.com/Anytop2025/Anytop-page/blob/main/static/videos/anytop_teaser/teaser.gif)
-
-## Update Notice
-
-📢 June 2, 2025 – Blender visualization script released.   
-📢 May 31, 2025 – Inpainting editing and Evaluation code uploaded.  
-📢 April 27, 2025 – New models uploaded (minor bug fix) — Update your model paths.  
-📢 April 27, 2025 – New cond.npy uploaded — Override your local file if you have already created the dataset.
-  * To handle both updates above, simply remove the current cond.npy file from your dataset directory and re-run "Download Pretrained Models and Dataset Dependencies."
-    
-## Release Timeline
-
-✅ April 6, 2025 – Training & inference code & preprocessing code  
-✅ April 12, 2025 – Pretrained models  
-✅ April 27, 2025 – DIFT feature correspondence code  
-✅ May 31, 2025 – Editing and evaluation code  
-✅ June 2, 2025 – Rendering code  
-📌 *(Processed dataset temporarily withheld due to licensing clarification)*  
-
-## Getting started
-
-This code was tested on `Ubuntu 18.04.5 LTS` and requires:
-
-* Python 3.8
-* conda3 or miniconda3
-* CUDA capable GPU (one is enough)
 
 ### 1. Setup environment
 Setup conda env:

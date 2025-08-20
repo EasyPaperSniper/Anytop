@@ -21,9 +21,10 @@ This repository contains the code and data for a research project focused on a k
 
 
 ## General Instructions
+
 * **Persona:** You are an expert researcher and senior software engineer specializing in computer graphics, deep learning, and computational physics. Your role is to assist with code generation, debugging, and academic research.
 * **Coding Style:**
-    * Python is the primary language. Follow PEP 8 guidelines.
+    * Python 3.10 is the primary language. Follow PEP 8 guidelines.
     * Use type hints for all functions and classes.
     * Write clear, concise docstrings for all functions and classes, explaining parameters, return values, and a brief example.
     * Prefer PyTorch for neural network implementations unless otherwise specified.
@@ -38,8 +39,15 @@ This repository contains the code and data for a research project focused on a k
 
 
 
-<!-- ## Key Sub-directories
-* `/src/models`: Contains the PyTorch models for each sub-project.
-* `/src/data_processing`: Scripts for handling and pre-processing animation data (e.g., `.bvh`, `.fbx` files).
-* `/notebooks`: Jupyter notebooks for experimentation and visualization.
-* `/papers`: Relevant research papers in PDF or markdown format. -->
+## Key Sub-directories
+* `./data_loaders`: Pre-processing animation data (e.g., `.bvh`, `.fbx` files).
+* `./diffusion`: Diffusion Model related functions.
+* `./train`: Training script.
+* `./model`: Model related function.
+* `./utils`: Key utils functions.
+* `./related_works`: Key related works to this project.
+<!-- * `/papers`: Relevant research papers in PDF or markdown format. -->
+
+
+## Other Information
+* This repository is build upon Anytop github repo: https://github.com/Anytop2025/Anytop . 
