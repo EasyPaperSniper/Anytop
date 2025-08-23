@@ -3,7 +3,7 @@ import numpy as np
 
 
 RAW_DATA_DIR = "dataset/truebones/zoo/Truebone_Z-OO"
-DATASET_DIR = "dataset/truebones/zoo/truebones_processed"
+DATASET_DIR = "dataset/truebones/processed"
 MOTION_DIR = "motions"
 ANIMATIONS_DIR = "animations"
 BVHS_DIR = "bvhs"
