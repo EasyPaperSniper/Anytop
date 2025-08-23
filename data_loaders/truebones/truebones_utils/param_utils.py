@@ -2,8 +2,8 @@ import statistics
 import numpy as np
 
 
-RAW_DATA_DIR = "dataset/truebones/zoo/Truebone_Z-OO"
-DATASET_DIR = "dataset/truebones/processed"
+RAW_DATA_DIR = "dataset/Truebones_raw"
+DATASET_DIR = "dataset/Truebones_processed"
 MOTION_DIR = "motions"
 ANIMATIONS_DIR = "animations"
 BVHS_DIR = "bvhs"

@@ -46,6 +46,7 @@ This repository contains the code and data for a research project focused on a k
 * `./model`: Model related function.
 * `./utils`: Key utils functions.
 * `./related_works`: Key related works to this project.
+* `./dataset`: Raw Truebones dataset folder.
 <!-- * `/papers`: Relevant research papers in PDF or markdown format. -->
 
 
