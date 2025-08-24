@@ -60,7 +60,7 @@ def move_xz_to_origin(anim, root_pose_init_xz=None):
     new_anim = Animation(anim.rotations.copy(), new_positions, anim.orients.copy(), new_offsets, anim.parents.copy())
     return new_anim, root_pose_init_xz
 
-"""" rotate the motion to initially face z+, ground at xz axis (negative y is below ground)"""
+""" rotate the motion to initially face z+, ground at xz axis (negative y is below ground)"""
 def rotate_to_hml_orientation(anim, object_type, face_joints=None):
     global_pos = positions_global(anim)
     qs_rot = get_root_quat(global_pos, object_type, face_joint_indx=face_joints)[0]
@@ -99,7 +99,7 @@ def get_6d_rep(qs):
     qs_ = qs.copy()
     return qs_.rotation_matrix(cont6d=True)
 
-"""" process anim object """
+""" process anim object """
 def process_anim(anim, object_type, root_pose_init_xz=None, scale_factor=None, ground_height=None, face_joints=None):
     rotated = rotate_to_hml_orientation(anim, object_type, face_joints) 
     centered, root_pose_init_xz_ = move_xz_to_origin(rotated, root_pose_init_xz)
@@ -428,7 +428,7 @@ def create_data_samples():
     n = text_file.write('max joints: %d\n' %(max_joints))
     n = text_file.write('total frames: %d\n' %(frames_counter))
     n = text_file.write('duration: %d\n' %(frames_counter / 12.5 / 60))
-    n = text_file.write('~~~~ objects_counts - Total: %d ~~~~\n' %(files_counter) )
+    n = text_file.write('~~~~ objects_counts - Total: %d ~~~~' %(files_counter) )
     for obj in objects_counter:
         text_file.write('%s: %d\n' %(obj, objects_counter[obj]))
     text_file.close()
@@ -693,7 +693,7 @@ def process_single_object_type(object_type, save_dir):
     n = text_file.write('max joints: %d\n' %(max_joints))
     n = text_file.write('total frames: %d\n' %(frames_counter))
     n = text_file.write('duration: %d\n' %(frames_counter / 12.5 / 60))
-    n = text_file.write('~~~~ objects_counts - Total: %d ~~~~\n' %(files_counter) )
+    n = text_file.write('~~~~ objects_counts - Total: %d ~~~~' %(files_counter) )
     for obj in objects_counter:
         text_file.write('%s: %d\n' %(obj, objects_counter[obj]))
     text_file.close()
@@ -731,7 +731,7 @@ def process_skeleton(object_name, bvh_dir, face_joints, save_dir, tpos_bvh=None)
     n = text_file.write('max joints: %d\n' %(max_joints))
     n = text_file.write('total frames: %d\n' %(frames_counter))
     n = text_file.write('duration: %d\n' %(frames_counter / 12.5 / 60))
-    n = text_file.write('~~~~ objects_counts - Total: %d ~~~~\n' %(files_counter) )
+    n = text_file.write('~~~~ objects_counts - Total: %d ~~~~' %(files_counter) )
     for obj in objects_counter:
         text_file.write('%s: %d\n' %(obj, objects_counter[obj]))
     text_file.close()
