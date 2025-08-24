@@ -6,10 +6,19 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import mpl_toolkits.mplot3d.axes3d as p3
 import os 
 from textwrap import wrap
-from moviepy.editor import VideoClip
-from moviepy.video.io.bindings import mplfig_to_npimage
-from moviepy.editor import clips_array
+from moviepy.video.VideoClip import VideoClip
+from moviepy.video.compositing.CompositeVideoClip import clips_array
 from pathlib import Path
+
+
+def mplfig_to_npimage(fig):
+    """ Converts a matplotlib figure to an image represented as a numpy array.
+    """
+    fig.canvas.draw()
+    image = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
+    image = image.reshape(fig.canvas.get_width_height()[::-1] + (4,)) # Matplotlib's buffer_rgba() returns RGBA
+    image = image[:, :, :3] # remove alpha channel
+    return image
 
 
 def list_cut_average(ll, intervals):
@@ -157,7 +166,7 @@ def get_general_skeleton_3d_motion(parents, joints, title, dataset, figsize=(7, 
     # preparation related to specific datasets
     if dataset == 'kit':
         data *= 0.003  # scale for visualization
-    # elif dataset in ['truebones']: 
+    # elif dataset in ['truebones']:
     #     data *= 0.2
     elif dataset in ['humanml', 'truebones', 'humanml_mat']:
         data *= 1.3  # scale for visualization
@@ -249,7 +258,7 @@ def plot_general_skeleton_correspondance(parents, joint2color, n_colors, joints,
     # preparation related to specific datasets
     if dataset == 'kit':
         data *= 0.003  # scale for visualization
-    # elif dataset in ['truebones']: 
+    # elif dataset in ['truebones']:
     #     data *= 0.2
     elif dataset in ['humanml', 'truebones', 'humanml_mat']:
         data *= 1.3  # scale for visualization
@@ -342,7 +351,7 @@ def plot_general_skeleton_kmeans(parents, centroid_indices, k, joints, title, da
     # preparation related to specific datasets
     if dataset == 'kit':
         data *= 0.003  # scale for visualization
-    # elif dataset in ['truebones']: 
+    # elif dataset in ['truebones']:
     #     data *= 0.2
     elif dataset in ['humanml', 'truebones', 'humanml_mat']:
         data *= 1.3  # scale for visualization
@@ -438,7 +447,7 @@ def plot_general_skeleton_pca(parents, pca_results, joints, title, dataset, figs
     # preparation related to specific datasets
     if dataset == 'kit':
         data *= 0.003  # scale for visualization
-    # elif dataset in ['truebones']: 
+    # elif dataset in ['truebones']:
     #     data *= 0.2
     elif dataset in ['humanml', 'truebones', 'humanml_mat']:
         data *= 1.3  # scale for visualization
