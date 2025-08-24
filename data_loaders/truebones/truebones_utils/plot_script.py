@@ -174,8 +174,8 @@ def get_general_skeleton_3d_motion(parents, joints, title, dataset, figsize=(7, 
         data *= -1.5 # reverse axes, scale for visualization
 
     fig = plt.figure(figsize=figsize)
-    plt.tight_layout()
-    ax = p3.Axes3D(fig)
+    ax = fig.add_subplot(projection='3d')    
+
     init()
     MINS = data.min(axis=0).min(axis=0)
     MAXS = data.max(axis=0).max(axis=0)
