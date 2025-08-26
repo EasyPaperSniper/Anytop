@@ -50,6 +50,11 @@ Finally, you can run the command:
 python -m utils.process_new_skeleton --object_name Chicken --bvh_dir assets/Truebones_Chicken --save_dir dataset/truebones/zoo/Chicken --face_joints_names Bip01_R_Thigh Bip01_L_Thigh BN_Finger_R_01 BN_Finger_L_01 --tpos_bvh assets/Truebones_Chicken/Chicken_TPOSE.bvh
 ```
 
+``` shell
+python -m data_loaders.truebones.truebones_utils.create_dataset.py
+```
+
+
 The code will create the following under save_dir:
 save_dir/
         |_motions

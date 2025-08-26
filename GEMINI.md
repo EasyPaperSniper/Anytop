@@ -42,6 +42,7 @@ This repository contains the code and data for a research project focused on a k
 ## Key Sub-directories
 * `./data_loaders`: Pre-processing animation data (e.g., `.bvh`, `.fbx` files).
 * `./diffusion`: Diffusion Model related functions.
+* `./VQ_VAE`: VQVAE related functions.
 * `./train`: Training script.
 * `./model`: Model related function.
 * `./utils`: Key utils functions.
