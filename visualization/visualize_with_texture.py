@@ -305,7 +305,14 @@ def main():
                 c_rot.target_space = 'POSE'
                 c_rot.owner_space = 'POSE'
                 if b.parent is None:
-                    # Also copy Z directly now
+                    # Copy root world-space translation (X, Y, Z) from BVH to FBX
+                    c_loc = b.constraints.new(type='COPY_LOCATION')
+                    c_loc.target = armature
+                    c_loc.subtarget = b.name
+                    c_loc.target_space = 'WORLD'
+                    c_loc.owner_space = 'WORLD'
+                    c_loc.use_x = True
+                    c_loc.use_y = True
                     c_loc.use_z = True
 
             # Bake onto FBX armature and clear constraints
