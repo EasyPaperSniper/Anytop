@@ -27,27 +27,30 @@ def ensure_dir(path: str):
 
 
 def purge_scene_except_basics():
-    """Delete all objects except lights, cameras, and the plane named 'Ground'."""
-    to_delete = []
+    """Delete all objects except lights, cameras, and the plane named 'Ground' (handles hidden objects)."""
     for obj in list(bpy.data.objects):
-        # Keep lights, cameras, and the Ground plane
-        if obj.type == 'MESH' and obj.name == GROUND_NAME:
+        keep = (obj.type in {"LIGHT", "CAMERA"}) or (obj.type == 'MESH' and obj.name == GROUND_NAME)
+        if keep:
             continue
-        if obj.type in {"LIGHT", "CAMERA"}:
-            continue
-        to_delete.append(obj)
-    if not to_delete:
-        return
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in to_delete:
+        # Unhide to be safe
         try:
-            obj.select_set(True)
+            obj.hide_set(False)
         except Exception:
             pass
-    try:
-        bpy.ops.object.delete()
-    except Exception as e:
-        print(f"   WARNING: Failed to delete some objects: {e}")
+        # Unlink from all collections
+        try:
+            for coll in list(obj.users_collection):
+                try:
+                    coll.objects.unlink(obj)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        # Remove datablock
+        try:
+            bpy.data.objects.remove(obj, do_unlink=True)
+        except Exception as e:
+            print(f"   WARNING: Could not remove object {obj.name}: {e}")
 
 
 def set_scene_fps(fps: int = 20):
@@ -267,16 +270,23 @@ def main():
         # Delete any other imported non-essential objects (lights/cameras/empties, extra armatures)
         to_delete = [o for o in new_objs if (o not in imported_meshes and o is not fbx_arm)]
         if to_delete:
-            bpy.ops.object.select_all(action='DESELECT')
             for a in to_delete:
                 try:
-                    a.select_set(True)
+                    a.hide_set(False)
                 except Exception:
                     pass
-            try:
-                bpy.ops.object.delete()
-            except Exception as e:
-                print(f"   WARNING: Could not delete some non-mesh FBX objects: {e}")
+                try:
+                    for coll in list(a.users_collection):
+                        try:
+                            coll.objects.unlink(a)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+                try:
+                    bpy.data.objects.remove(a, do_unlink=True)
+                except Exception as e:
+                    print(f"   WARNING: Could not delete imported object {getattr(a,'name','<unknown>')}: {e}")
 
         # Apply uniform scale to FBX armature + meshes without applying transforms
         if args.fbx_scale != 1.0:
@@ -332,11 +342,23 @@ def main():
                         armature.hide_render = True
                     print("   - Source BVH armature hidden.")
                 elif args.source_arm_cleanup == 'delete':
-                    bpy.ops.object.select_all(action='DESELECT')
-                    armature.select_set(True)
-                    bpy.context.view_layer.objects.active = armature
-                    bpy.ops.object.delete()
-                    print("   - Source BVH armature deleted.")
+                    try:
+                        armature.hide_set(False)
+                    except Exception:
+                        pass
+                    try:
+                        for coll in list(armature.users_collection):
+                            try:
+                                coll.objects.unlink(armature)
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+                    try:
+                        bpy.data.objects.remove(armature, do_unlink=True)
+                        print("   - Source BVH armature deleted.")
+                    except Exception as e:
+                        print(f"   WARNING: Failed to delete source armature: {e}")
             except Exception as e:
                 print(f"   WARNING: Source armature cleanup failed: {e}")
         elif imported_meshes and armature:
