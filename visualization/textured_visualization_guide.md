@@ -1,82 +1,98 @@
-# Guide: Textured BVH Visualization in Blender
+# Guide: BVH + Textured Plane Visualization in Blender
 
-This document outlines the process and implementation of the `visualize_with_texture.py` script, a tool for applying BVH motion and a custom texture to a character in a pre-defined Blender scene.
+This guide documents the minimal, robust pipeline for visualizing a BVH animation in Blender while displaying an optional image sequence as a texture on a ground plane. The scene template is intentionally simple and motion‑agnostic; all motion logic happens in the visualization script.
 
 ---
 
-## 1. Goal & Purpose
+## 1. Design Principles
 
-The primary goal is to create a reusable script that automates the process of visualizing motion data on a fully textured character. This is an improvement over stick-figure visualizations as it gives a much better sense of the final look and feel of the animation.
+1) Minimal base scene: The template scene contains only a light, a camera, and a plane named `Ground`. No armature or character lives in the template.
+2) Clean state per run: The visualization script removes everything except the light(s), camera(s), and the `Ground` plane; then it imports the BVH to create a fresh armature and animation.
+3) Optional texture as image sequence: A directory of numbered images (jpg/png) can be applied to the `Ground` plane as an animated texture. If no directory is given, the plane keeps its default material.
+4) Correct timing: The scene FPS can be set (default 20), and the frame range is aligned to the BVH action range.
 
-The script is designed to be run from the command line, allowing it to be integrated into automated processing or rendering pipelines.
+## 2. Workflow Overview
 
-## 2. Core Functionality
-
-The script performs the following actions in sequence:
-
-1.  **Loads a Template Scene:** It always starts by loading `visualization/simple_scene.blend`, which contains the base character mesh, armature, lighting, and camera setup.
-2.  **Clears Existing Animation:** To ensure a clean slate, it finds the character's armature and removes any animation data that may have been applied in a previous run.
-3.  **Applies a Custom Texture:** It takes a user-provided `.jpg` file and applies it to the character's material. This is done by finding the appropriate "Image Texture" node in the material's shader graph and replacing its image.
-4.  **Applies BVH Motion:** It imports a user-provided `.bvh` file and applies the motion to the character's armature.
+1) Load the base scene from `visualization/simple_scene.blend` (contains light, camera, plane).
+2) Purge everything not in the base set (lights, cameras, and the `Ground` plane).
+3) Import the BVH using Blender UI defaults (orientation preserved): `axis_forward='-Z'`, `axis_up='Y'`, `target='ARMATURE'`, `global_scale=1.0`. This mirrors File → Import → BVH behavior so the character points forward instead of upward.
+4) Set scene FPS (default 20) and align frame range to the imported action.
+5) If `--texture_dir` is provided, create a plane and parent it to the root bone of the imported armature. Apply the folder of images as an image‑sequence material to that plane so it moves with the skeleton.
 
 ## 3. Implementation Details & Assumptions
 
-The script, `visualize_with_texture.py`, is built using Blender's Python API (`bpy`).
+The scripts rely on Blender’s Python API (`bpy`).
 
-### Key Assumptions:
+Base scene (`setup_scene.py`) guarantees objects named:
+- Plane mesh named `Ground`.
+- At least one Sun light.
+- A Camera.
 
-To work correctly, the script makes a few assumptions about the contents of `simple_scene.blend`:
-
-*   **Armature:** It assumes there is an armature object named **`'Armature'`**. This is the skeleton that the BVH motion will be applied to.
-*   **Character Mesh:** It assumes there is a mesh object parented to the armature. The script will attempt to find this automatically.
-*   **Material & Texture Node:** It assumes the character mesh has a material that contains a `ShaderNodeTexImage` (an "Image Texture" node) which is the target for applying the new texture.
-
-### Script Structure:
-
-- **Argument Parsing:** The script uses Python's `argparse` to accept command-line arguments for the BVH file path (`--bvh_path`) and the texture file path (`--texture_path`).
-- **`clear_animation()`:** A function dedicated to cleaning up previous animations.
-- **`apply_texture()`:** A function to handle the logic of finding the material and swapping the texture.
-- **`apply_bvh()`:** A function that uses `bpy.ops.import_anim.bvh` to import the motion. It includes parameters for scale and axis correction, which are common requirements when working with BVH files.
+Visualization (`visualize_with_texture.py`) assumptions:
+- Keeps only light(s), camera(s), and the mesh named `Ground`; deletes others before import.
+- BVH import creates a new armature and links an Action automatically.
+- Texture directory, if provided, contains numbered images for an image‑sequence texture; if not numbered, only the first image may display.
 
 ## 4. Generating the Template Scene (`setup_scene.py`)
 
-The `visualize_with_texture.py` script relies on the template `visualization/simple_scene.blend` file. This file is not stored directly in the repository; instead, it is generated by the `visualization/setup_scene.py` script.
-
 ### Purpose
 
-The `setup_scene.py` script programmatically creates a new `.blend` file containing all the necessary components that the main visualization script assumes are present:
-- A camera and a sun lamp.
-- An armature object named `'Armature'`.
-- A placeholder UV sphere mesh named `'CharacterMesh'`, parented to the armature.
-- A material named `'CharacterMaterial'` applied to the mesh.
-- A correctly configured shader node tree within the material, including the essential `'Image Texture'` node.
+Create and save a minimal `.blend` scene containing:
+- A Sun light.
+- A Camera.
+- A Plane mesh named `Ground` centered at the origin.
 
-Running this script ensures that the template scene is always in the correct, expected state.
-
-### How to Use this Script
-
-You only need to run this script once to generate the `simple_scene.blend` file.
-
-**Command:**
+### Command
 ```bash
 blender -b -P visualization/setup_scene.py
 ```
-This will create `visualization/simple_scene.blend`, which can then be used by the main `visualize_with_texture.py` script.
+This creates/overwrites `visualization/simple_scene.blend`.
 
 ---
 
-## 5. How to Use the Main Visualization Script
+## 5. Using the Visualization Script
 
-
-You must run this script using the Blender executable from your command line. This allows it to access the `bpy` API while running in the background.
-
-**Example Command:**
-
+Minimal test (no texture), matching Blender UI defaults:
 ```bash
-blender -b -P visualization/visualize_with_texture.py -- --bvh_path /path/to/your/motion.bvh --texture_path /path/to/your/texture.jpg
+blender -b -P visualization/visualize_with_texture.py -- \
+  --bvh_path dataset/Truebones_processed/bvhs/Raptor2___Run_693.bvh \
+  --output_blend visualization/simple_scene.blend \
+  --output_mp4 visualization/Raptor2___Run_693.mp4 \
+  --fps 20
 ```
 
-- `blender`: Path to your Blender executable.
-- `-b`: Runs Blender in the background (no UI).
-- `-P`: Specifies the Python script to run.
-- `--`: This is a crucial separator. Blender-specific arguments go before it, and arguments for our Python script go after it.
+
+
+Attach FBX meshes (scaled) to the imported BVH armature (retargeted, keep FBX skinning):
+```bash
+blender -b -P visualization/visualize_with_texture.py -- \
+  --bvh_path dataset/Truebones_processed/bvhs/Raptor2___Run_693.bvh \
+  --fbx_path dataset/Truebones_raw/Raptor2/Raptor-TPOSE.fbx \
+  --fbx_scale 1.0 \
+  --fbx_use_manual_orientation --fbx_axis_forward Y --fbx_axis_up Z \
+  --source_arm_cleanup hide \
+  --output_blend visualization/simple_scene.blend \
+  --output_mp4 visualization/Raptor2___Run_693_fbx.mp4 \
+  --fps 20
+```
+
+
+Notes on FBX meshes and retargeting
+- The script imports the FBX and keeps the first imported FBX armature plus its meshes; other imported object types are removed. It uniformly scales the FBX armature and meshes (without applying transforms).
+- If both armatures exist (BVH and FBX) and meshes were imported, the script retargets: it adds Copy Rotation constraints per bone (and Copy Location for the root) from the BVH armature to the FBX armature, then bakes the result to an action on the FBX armature and clears constraints. The meshes keep their original skinning and follow the baked motion.
+- If no FBX armature is present, the script falls back to binding the meshes to the BVH armature with automatic weights.
+
+FBX orientation control
+- The script does not apply any initial rotation to the imported FBX. Use FBX manual orientation flags at import time if needed: `--fbx_use_manual_orientation --fbx_axis_forward mZ --fbx_axis_up Y` (mX/mY/mZ represent negative axes).
+
+Z motion handling
+- Root translation X, Y, and Z are copied directly from the BVH root to the FBX root (world space). No additional Z scaling is applied.
+
+Source armature cleanup
+- Control the BVH source armature after bake with `--source_arm_cleanup {keep,hide,delete}`. Example uses `hide` to keep the scene clean while preserving the source for inspection.
+
+Notes
+- The script overwrites the `.blend` given by `--output_blend`.
+- The MP4 is saved to the given path; parent directories are created if missing.
+- Image sequence works best when files are numerically indexed (e.g., tex_0001.jpg, tex_0002.jpg, …). The plane is parented to the root bone and follows the motion.
+If your manual UI import used non-default axes, we can expose axis overrides, but by default the script now mirrors Blender’s standard BVH import (Forward -Z, Up Y).
