@@ -1,6 +1,5 @@
 **Truebone_Z-OO**
 **.DS_Store**
-**dataset**
-**GEMINI**
+/dataset
 **__pycache__**
 **.egg-info**
