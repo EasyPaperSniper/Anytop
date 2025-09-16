@@ -3,3 +3,5 @@
 /dataset
 **__pycache__**
 **.egg-info**
+/results/temp_**
+**.blend**

@@ -1,6 +1,6 @@
 # Project Status
 
-High-level: The repository contains a working baseline from Anytop and a functional prototype of a limb‑wise VQ‑VAE tokenizer. Data loaders support both full‑body and limb windows. The core missing piece is a training and integration pipeline that conditions the topology‑aware decoder on limb tokens, plus tooling to export and consume tokens at scale.
+High-level: The repository contains a working baseline from Anytop and a functional limb‑wise VQ‑VAE tokenizer with training/evaluation scripts. Data loaders support both full‑body and limb windows. Next steps are large‑scale token export and integration of token‑conditioned decoding.
 
 
 ## What We Have
@@ -8,8 +8,11 @@ High-level: The repository contains a working baseline from Anytop and a functio
   - Truebones processing utilities (`data_loaders/truebones/truebones_utils/*`, `utils/process_new_skeleton.py`), and paths configured via `param_utils.py`/`get_opt.py`.
   - Processed dataset convention in this repo: `dataset/Truebones_processed/{motions, animations, bvhs, cond.npy}`.
 
-- Limb tokenizer prototype
-  - `limb_embedding/temp_limb_VQVAE.py`: Per‑limb VQ‑VAE with variable‑joint masking, EMA codebook, and FK utilities from 6D rotations.
+- Limb tokenizer
+  - `limb_embedding/models/limb_vqvae.py`: Per‑limb VQ‑VAE with variable‑joint masking, EMA codebook, and FK utilities from 6D rotations.
+  - `limb_embedding/train_limb_vqvae.py`: Training script (geodesic SO(3) loss + VQ losses) with balanced sampling.
+  - `limb_embedding/eval_limb_vqvae.py`: Evaluation script reporting reconstruction loss and codebook usage.
+  - `limb_embedding/test_small_run.py`: Small synthetic/data sanity test.
   - `data_loaders/truebones/data/limb_emb_dataset.py`: Limb window dataset that pads joints, builds joint masks, and remaps local parents per chain.
 
 - Anytop backbone (decoder)
@@ -23,13 +26,12 @@ High-level: The repository contains a working baseline from Anytop and a functio
 
 
 ## What’s Missing / To Implement
-- LimbVQVAE training pipeline
-  - Training script/CLI, config management, and logging (EMA VQ losses, rotation/FK/contact/smoothness losses, codebook utilization).
-  - Explicit contact feature handling (limb dataset currently extracts 6D rotations from features 3:9). Optionally extend inputs/heads to include contact, root deltas, etc.
-
 - Token export and storage
   - Offline tokenization pass over the dataset to save per‑limb, per‑window token indices (and optional code vectors) with timestamps and limb identifiers.
   - Define a durable format (e.g., `.npz` with {motion_id, limb_id, start, length, token_ids}).
+
+- Contact/aux targets
+  - Extend inputs/heads to include contact flags, root deltas, or other features; add losses and metrics for those channels.
 
 - Token‑conditioned decoder
   - Integrate token sequences into the decoder: cross‑attention over limb tokens, or learned token‑to‑frame alignment modules.
