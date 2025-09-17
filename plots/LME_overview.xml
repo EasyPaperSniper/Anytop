@@ -1,0 +1,324 @@
+<mxfile host="app.diagrams.net" modified="2025-09-17T01:40:00.000Z" agent="GPT-5 Thinking" version="22.0.8" type="device">
+  <diagram id="vqvae" name="VQVAE Architecture">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- TITLE -->
+        <mxCell id="title" value="VQVAE for Motion (Encoder → VQ → Decoder)" style="text;html=1;align=center;verticalAlign=middle;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="450" y="10" width="1300" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- LANE: ENCODER -->
+        <mxCell id="lane_encoder" value="Encoder" style="swimlane;startSize=28;fontStyle=1;horizontal=1;fillColor=#EEF7FF;strokeColor=#1A73E8;rounded=1" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="900" height="1200" as="geometry"/>
+        </mxCell>
+
+        <!-- LANE: VQ -->
+        <mxCell id="lane_vq" value="VQ (EMA)" style="swimlane;startSize=28;fontStyle=1;horizontal=1;fillColor=#FFF8E1;strokeColor=#F9AB00;rounded=1" vertex="1" parent="1">
+          <mxGeometry x="980" y="70" width="360" height="1200" as="geometry"/>
+        </mxCell>
+
+        <!-- LANE: DECODER -->
+        <mxCell id="lane_decoder" value="Decoder" style="swimlane;startSize=28;fontStyle=1;horizontal=1;fillColor=#E9F7EF;strokeColor=#34A853;rounded=1" vertex="1" parent="1">
+          <mxGeometry x="1360" y="70" width="820" height="1200" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== ENCODER DETAILS ===== -->
+
+        <!-- Input tensor -->
+        <mxCell id="enc_input" value="Input Motion&#10;[B, T, J, D_in]" style="shape=process;rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1A73E8" vertex="1" parent="lane_encoder">
+          <mxGeometry x="40" y="30" width="220" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Per-joint Conv1D group -->
+        <mxCell id="g_conv1d" value="Per-Joint Temporal Conv1D (downsample)" style="group" vertex="1" parent="lane_encoder">
+          <mxGeometry x="20" y="130" width="860" height="210" as="geometry"/>
+        </mxCell>
+
+        <!-- Joint splitter -->
+        <mxCell id="enc_joint_split" value="Split over joints (J)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#FFFFFF" vertex="1" parent="g_conv1d">
+          <mxGeometry x="10" y="10" width="160" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Conv1D stack example -->
+        <mxCell id="enc_conv_block1" value="Conv1D(k=5,s=2) + ReLU + BN" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_conv1d">
+          <mxGeometry x="190" y="10" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="enc_conv_block2" value="Conv1D(k=3,s=2) + ReLU + BN" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_conv1d">
+          <mxGeometry x="410" y="10" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="enc_conv_block3" value="Conv1D(k=3,s=1) + ReLU" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_conv1d">
+          <mxGeometry x="630" y="10" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Downsample note -->
+        <mxCell id="enc_downsample_note" value="↓ T / 4 (example)" style="text;html=1;align=left;verticalAlign=top;fontSize=12" vertex="1" parent="g_conv1d">
+          <mxGeometry x="190" y="75" width="200" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Per-frame joint self-attention block -->
+        <mxCell id="g_joint_attn" value="Per-Frame Joint Self-Attention (joint index PE)" style="group" vertex="1" parent="lane_encoder">
+          <mxGeometry x="20" y="360" width="860" height="240" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_pe" value="Add Joint Index PE" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#FFFFFF" vertex="1" parent="g_joint_attn">
+          <mxGeometry x="10" y="10" width="180" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_qkv" value="Linear Q / K / V" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_joint_attn">
+          <mxGeometry x="210" y="10" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_dot" value="Scaled Dot-Product&#10;Attention (per frame)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#FFFFFF" vertex="1" parent="g_joint_attn">
+          <mxGeometry x="410" y="10" width="200" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_softmax" value="Softmax over joints" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#FFFFFF" vertex="1" parent="g_joint_attn">
+          <mxGeometry x="630" y="10" width="150" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_mhsa_out" value="MHSA + Residual + LayerNorm" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_joint_attn">
+          <mxGeometry x="10" y="90" width="300" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_ffn" value="Position-wise FFN + Residual + LayerNorm" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_joint_attn">
+          <mxGeometry x="330" y="90" width="300" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_attn_note" value="Output: per-frame aggregated joint features" style="text;html=1;align=left;verticalAlign=top;fontSize=12" vertex="1" parent="g_joint_attn">
+          <mxGeometry x="650" y="95" width="200" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Frame descriptor via attention pooling -->
+        <mxCell id="enc_frame_pool" value="Frame Descriptor via Attention Pooling&#10;(over joints → one vector per frame)" style="shape=card;rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1A73E8" vertex="1" parent="lane_encoder">
+          <mxGeometry x="40" y="620" width="380" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Temporal transformer block -->
+        <mxCell id="g_temp_transformer" value="Temporal Transformer Block" style="group" vertex="1" parent="lane_encoder">
+          <mxGeometry x="20" y="720" width="860" height="230" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_t_pe" value="Add Temporal PE" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#FFFFFF" vertex="1" parent="g_temp_transformer">
+          <mxGeometry x="10" y="10" width="170" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_t_qkv" value="Linear Q / K / V (over frames)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_temp_transformer">
+          <mxGeometry x="200" y="10" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_t_dot" value="Scaled Dot-Product Attention (over time)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#FFFFFF" vertex="1" parent="g_temp_transformer">
+          <mxGeometry x="440" y="10" width="230" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_t_softmax" value="Softmax over frames" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#FFFFFF" vertex="1" parent="g_temp_transformer">
+          <mxGeometry x="690" y="10" width="150" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_t_mhsa" value="MHSA + Residual + LayerNorm" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_temp_transformer">
+          <mxGeometry x="10" y="95" width="300" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="enc_t_ffn" value="Position-wise FFN + Residual + LayerNorm" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="g_temp_transformer">
+          <mxGeometry x="330" y="95" width="300" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Attention pooling over time -->
+        <mxCell id="enc_time_pool" value="Attention Pooling over Time → z_e" style="shape=card;rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1A73E8" vertex="1" parent="lane_encoder">
+          <mxGeometry x="40" y="970" width="380" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Enc output -->
+        <mxCell id="enc_out" value="z_e [B, D_latent]" style="shape=process;rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1A73E8" vertex="1" parent="lane_encoder">
+          <mxGeometry x="40" y="1070" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== VQ DETAILS ===== -->
+
+        <mxCell id="vq_in" value="z_e" style="shape=ellipse;whiteSpace=wrap;html=1;strokeColor=#F9AB00;fillColor=#FFFFFF" vertex="1" parent="lane_vq">
+          <mxGeometry x="40" y="40" width="80" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Codebook box -->
+        <mxCell id="codebook" value="Codebook E ∈ ℝ[K×D]" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#F9AB00;fillColor=#FFF3CD" vertex="1" parent="lane_vq">
+          <mxGeometry x="150" y="30" width="180" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Quantization -->
+        <mxCell id="quantize" value="Nearest Neighbor Quantization&#10;z_q = e_k,  k = argmin||z_e − e_k||" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#F9AB00;fillColor=#FFFFFF" vertex="1" parent="lane_vq">
+          <mxGeometry x="40" y="120" width="290" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- STE -->
+        <mxCell id="ste" value="Straight-Through Estimator (backprop)" style="shape=card;rounded=1;whiteSpace=wrap;html=1;strokeColor=#F9AB00;fillColor=#FFFFFF" vertex="1" parent="lane_vq">
+          <mxGeometry x="40" y="230" width="290" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- EMA usage -->
+        <mxCell id="ema" value="EMA Updates: codebook vectors + usage counts" style="shape=process;rounded=1;whiteSpace=wrap;html=1;strokeColor=#F9AB00;fillColor=#FFF8E1" vertex="1" parent="lane_vq">
+          <mxGeometry x="40" y="310" width="290" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- VQ output -->
+        <mxCell id="vq_out" value="z_q [B, D_latent]" style="shape=ellipse;whiteSpace=wrap;html=1;strokeColor=#F9AB00;fillColor=#FFFFFF" vertex="1" parent="lane_vq">
+          <mxGeometry x="110" y="400" width="150" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== DECODER DETAILS ===== -->
+
+        <!-- Temporal seed -->
+        <mxCell id="dec_seed" value="Temporal Seed: repeat z_q over T' + sinusoidal PE" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#FFFFFF" vertex="1" parent="lane_decoder">
+          <mxGeometry x="40" y="30" width="360" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Per-frame joint self-attention (broadcast) -->
+        <mxCell id="g_dec_joint_attn" value="Per-Frame Joint Self-Attention (broadcast to joints)" style="group" vertex="1" parent="lane_decoder">
+          <mxGeometry x="20" y="130" width="780" height="250" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_broadcast" value="Broadcast to J joints" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#FFFFFF" vertex="1" parent="g_dec_joint_attn">
+          <mxGeometry x="10" y="10" width="170" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_qkv" value="Linear Q / K / V" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#E8F5E9" vertex="1" parent="g_dec_joint_attn">
+          <mxGeometry x="200" y="10" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_dot" value="Scaled Dot-Product Attention (per frame)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#FFFFFF" vertex="1" parent="g_dec_joint_attn">
+          <mxGeometry x="400" y="10" width="210" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_softmax" value="Softmax over joints" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#FFFFFF" vertex="1" parent="g_dec_joint_attn">
+          <mxGeometry x="630" y="10" width="140" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_mhsa" value="MHSA + Residual + LayerNorm" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#E8F5E9" vertex="1" parent="g_dec_joint_attn">
+          <mxGeometry x="10" y="95" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_ffn" value="Position-wise FFN + Residual + LayerNorm" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#E8F5E9" vertex="1" parent="g_dec_joint_attn">
+          <mxGeometry x="310" y="95" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Per-joint ConvTranspose1D group -->
+        <mxCell id="g_deconv" value="Per-Joint ConvTranspose1D (upsample to original length)" style="group" vertex="1" parent="lane_decoder">
+          <mxGeometry x="20" y="400" width="780" height="230" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_deconv1" value="ConvTranspose1D(k=4,s=2) + ReLU + BN" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#E8F5E9" vertex="1" parent="g_deconv">
+          <mxGeometry x="10" y="10" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dec_deconv2" value="ConvTranspose1D(k=4,s=2) + ReLU + BN" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#E8F5E9" vertex="1" parent="g_deconv">
+          <mxGeometry x="270" y="10" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dec_deconv3" value="Conv1D(k=3,s=1) + ReLU" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#E8F5E9" vertex="1" parent="g_deconv">
+          <mxGeometry x="530" y="10" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="dec_upsample_note" value="↑ T back to original" style="text;html=1;align=left;verticalAlign=top;fontSize=12" vertex="1" parent="g_deconv">
+          <mxGeometry x="10" y="80" width="220" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Linear head -->
+        <mxCell id="dec_head" value="Linear Head → D_out (e.g., 6D rotations)" style="shape=process;rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#34A853" vertex="1" parent="lane_decoder">
+          <mxGeometry x="40" y="650" width="360" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Output -->
+        <mxCell id="dec_out" value="Reconstructed Motion&#10;[B, T, J, D_out]" style="shape=process;rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#34A853" vertex="1" parent="lane_decoder">
+          <mxGeometry x="40" y="740" width="260" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== ARROWS (FLOW) ===== -->
+
+        <!-- Encoder flow -->
+        <mxCell id="e1" edge="1" parent="lane_encoder" source="enc_input" target="g_conv1d" style="endArrow=block;endFill=1;strokeColor=#1A73E8;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="lane_encoder" source="g_conv1d" target="g_joint_attn" style="endArrow=block;endFill=1;strokeColor=#1A73E8;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="lane_encoder" source="g_joint_attn" target="enc_frame_pool" style="endArrow=block;endFill=1;strokeColor=#1A73E8;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="lane_encoder" source="enc_frame_pool" target="g_temp_transformer" style="endArrow=block;endFill=1;strokeColor=#1A73E8;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="lane_encoder" source="g_temp_transformer" target="enc_time_pool" style="endArrow=block;endFill=1;strokeColor=#1A73E8;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="lane_encoder" source="enc_time_pool" target="enc_out" style="endArrow=block;endFill=1;strokeColor=#1A73E8;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Encoder → VQ -->
+        <mxCell id="e7" edge="1" parent="1" source="enc_out" target="vq_in" style="endArrow=block;endFill=1;strokeColor=#999999;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1000" y="1130" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- VQ flow -->
+        <mxCell id="e8" edge="1" parent="lane_vq" source="vq_in" target="quantize" style="endArrow=block;endFill=1;strokeColor=#F9AB00;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="lane_vq" source="quantize" target="ste" style="endArrow=block;endFill=1;strokeColor=#F9AB00;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="lane_vq" source="ste" target="ema" style="endArrow=block;endFill=1;strokeColor=#F9AB00;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="lane_vq" source="ste" target="vq_out" style="endArrow=block;endFill=1;strokeColor=#F9AB00;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Codebook ↔ Quantize (lookup) -->
+        <mxCell id="e12" edge="1" parent="lane_vq" source="codebook" target="quantize" style="dashed=1;endArrow=open;endFill=0;strokeColor=#F9AB00;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- EMA ↔ Codebook (updates) -->
+        <mxCell id="e13" edge="1" parent="lane_vq" source="ema" target="codebook" style="dashed=1;endArrow=block;endFill=1;strokeColor=#F9AB00;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- VQ → Decoder -->
+        <mxCell id="e14" edge="1" parent="1" source="vq_out" target="dec_seed" style="endArrow=block;endFill=1;strokeColor=#999999;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decoder flow -->
+        <mxCell id="e15" edge="1" parent="lane_decoder" source="dec_seed" target="g_dec_joint_attn" style="endArrow=block;endFill=1;strokeColor=#34A853;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="lane_decoder" source="g_dec_joint_attn" target="g_deconv" style="endArrow=block;endFill=1;strokeColor=#34A853;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="lane_decoder" source="g_deconv" target="dec_head" style="endArrow=block;endFill=1;strokeColor=#34A853;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="lane_decoder" source="dec_head" target="dec_out" style="endArrow=block;endFill=1;strokeColor=#34A853;orthogonalLoop=1;rounded=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- SMALL LEGEND -->
+        <mxCell id="legend_box" value="Legend" style="swimlane;startSize=24;fontStyle=1;horizontal=1;fillColor=#FFFFFF;strokeColor=#BDBDBD;rounded=1" vertex="1" parent="1">
+          <mxGeometry x="60" y="1290" width="560" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend_enc" value="Encoder ops" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1A73E8;fillColor=#E3F2FD" vertex="1" parent="legend_box">
+          <mxGeometry x="10" y="30" width="140" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend_vq" value="VQ / EMA" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#F9AB00;fillColor=#FFF3CD" vertex="1" parent="legend_box">
+          <mxGeometry x="170" y="30" width="140" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend_dec" value="Decoder ops" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#34A853;fillColor=#E8F5E9" vertex="1" parent="legend_box">
+          <mxGeometry x="330" y="30" width="140" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend_flow" value="solid: data flow, dashed: params/update" style="text;html=1;align=left;verticalAlign=middle;fontSize=12" vertex="1" parent="legend_box">
+          <mxGeometry x="10" y="68" width="520" height="30" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
